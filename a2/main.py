@@ -5,7 +5,6 @@
 #   numpy, PyOpenGL, Pillow
 
 
-import copy
 import sys
 import os
 import math
@@ -112,8 +111,8 @@ def forwardFT(image):
     # print(modified)
     # return modified
     # return np.fft.fft2( image )
-    ftXV = copy.deepcopy(image)
-    ftUV = copy.deepcopy(image).T
+    ftXV = np.copy(image)
+    ftUV = np.copy(image).T
 
     ftXV = np.array(list(map(ft1D, image)))
     ftXV = ftXV.T
@@ -178,19 +177,16 @@ def multiplyFTs(image, filter):
     #   filter = filter * math.exp(math.pi * x * N**2)
     # for y in range(M):
     #   filter = filter * math.exp(math.pi * y * N**2)
-    n = len(filter)
-    m = len(filter[0])
-    filterX = np.array(
-        list(map(lambda s: s[1] * np.exp(math.pi * 1j * s[0]), enumerate(filter))))
+    def shift(s): return s[1] * np.exp(math.pi * 1j * s[0])
+
+    filterX = np.array(list(map(shift, enumerate(filter))))
     filterX = filterX.T
-    filterXY = np.array(
-        list(map(lambda s: s[1] * np.exp(math.pi * 1j * s[0]), enumerate(filterX))))
+    filterXY = np.array(list(map(shift, enumerate(filterX))))
     shiftedFilter = filterXY.T
     newImageFT = image * shiftedFilter
-    # newImage = inverseFT(newImageFT)
+
     return newImageFT
 
-    # return modified
     # return np.convolve(image, filter)  # (this is wrong)
 
 
@@ -831,16 +827,40 @@ def mouseMotion(x, y):
 
 
 def modulatePixels(image, x, y, isFT):
-    # if editMode == 'a':
+    global radius
+    tmpImage = np.copy(image)
+    stdDev = 1 / 2 * radius
 
-    # YOUR CODE HERE
+    width = len(image)
+    height = len(image[0])
 
-    pass
+    neighbourStartX = max(0, x - radius)
+    neighbourStartY = max(0, y - radius)
+    neighbourEndX = min(width, x + radius)
+    neighbourEndY = min(height, y + radius)
 
+    nxRange = range(neighbourStartX, neighbourEndX)
+    nyRange = range(neighbourStartY, neighbourEndY)
+
+    for x in nxRange:
+        for y in nyRange:
+            if editMode == 's':
+                if isFT:
+                    image[x][y] = tmpImage[x][y]
+                else:
+                    image[x][y] = tmpImage[x][y]
+            elif editMode == 'a':
+                if isFT:
+                    image[x][y] = tmpImage[x][y]
+                else:
+                    image[x][y] = tmpImage[x][y]
+
+    return image
 
 # For an image coordinate, if it's < 0 or >= max, wrap the coorindate
 # around so that it's in the range [0,max-1].  This is useful in the
 # modulatePixels() function when dealing with FT images.
+
 
 def wrap(val, max):
 
