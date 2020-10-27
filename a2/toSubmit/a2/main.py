@@ -98,19 +98,6 @@ def forwardFT(image):
     # You must replace this code with your own, keeping the same function name are parameters.
     # print("forwardFT")
 
-    # rows = np.zeros(len(image))
-    # cols = np.zeros(len(image[0]))
-    # modified = np.zeros_like(image, dtype="complex")
-
-    # for x in range(image.shape[0]):
-    # modified[x, :] = ft1D(image[x, :])
-
-    # for y in range(image.shape[1]):
-    # modified[:, y] = ft1D(modified[:, y])
-
-    # print(modified)
-    # return modified
-    # return np.fft.fft2( image )
     ftXV = np.copy(image)
     ftUV = np.copy(image).T
 
@@ -164,19 +151,6 @@ def inverseFT(image):
 def multiplyFTs(image, filter):
 
     # YOUR CODE HERE
-
-    # N = filter.shape[0]
-    # M = filter.shape[1]
-    # modified = numpy.zeros_like(image)
-    # for x in range(N):
-    #   filter = filter * math.exp(2 * math.pi * (x/2)/N)
-    # for y in range(M):
-    #   filter = filter * math.exp(2 * math.pi * (y/2)/M)
-
-    # for x in range(N):
-    #   filter = filter * math.exp(math.pi * x * N**2)
-    # for y in range(M):
-    #   filter = filter * math.exp(math.pi * y * N**2)
     def shift(s): return s[1] * np.exp(math.pi * 1j * s[0])
 
     filterX = np.array(list(map(shift, enumerate(filter))))
@@ -187,11 +161,8 @@ def multiplyFTs(image, filter):
 
     return newImageFT
 
-    # return np.convolve(image, filter)  # (this is wrong)
-
 
 # Set up the display and draw the current image
-
 
 def display():
 
@@ -826,12 +797,9 @@ def mouseMotion(x, y):
 # stored in image[ydim-1-y][xdim-1-x].
 
 def gaussian(x, y, meanX, meanY, SD):
-    # for x in range(image.shape[0]):
-    # for y in range(image.shape[1]):
-    return 1/(2 * math.pi * SD * SD) * math.exp(- ((x - meanX) ** 2 / (2*SD ** 2) + (y-meanY)**2 )/ (2*SD ** 2))
-    #   print(val)
-    #   print("\t")
-    # print("\n")
+    return 1 / (2 * math.pi * SD ** 2) * math.exp(
+        -((x - meanX) ** 2 / (2 * SD ** 2) + (y - meanY) ** 2)
+        / (2 * SD ** 2))
 
 
 def modulatePixels(image, x, y, isFT):
@@ -856,19 +824,21 @@ def modulatePixels(image, x, y, isFT):
     for nX in nyRange:
         for nY in nxRange:
             if editMode == b's':
+                factor = (1 - gaussian(nY, nX, x, y, stdDev))
                 if isFT:
-                    image[nX][nY] = np.exp(np.log(tmpImage[nX][nY])*(1 - gaussian(nY, nX, x, y, stdDev)))
-                    image[wrap(width-nX, width)][wrap(height-nY, height)] = np.exp(np.log(tmpImage[nX][nY])*(1 - gaussian(nY, nX, x, y, stdDev)))
+                    image[nX][nY] = np.exp(np.log(tmpImage[nX][nY]) * factor)
+                    image[wrap(width - nX, width)][wrap(height - nY, height)] \
+                        = np.exp(np.log(tmpImage[nX][nY]) * factor)
                 else:
-                    image[nX][nY] = tmpImage[nX][nY] * \
-                        (1 - gaussian(nY, nX, x, y, stdDev))
+                    image[nX][nY] = tmpImage[nX][nY] * factor
             elif editMode == b'a':
+                factor = 1 + 0.1 + gaussian(nY, nX, x, y, stdDev)
                 if isFT:
-                    image[nX][nY] = np.exp(np.log(tmpImage[nX][nY])*(1 + 0.1 + gaussian(nY, nX, x, y, stdDev)))
-                    image[wrap(width-nX, width)][wrap(height-nY, height)] = np.exp(np.log(tmpImage[nX][nY])*(1 + 0.1 + gaussian(nY, nX, x, y, stdDev)))
+                    image[nX][nY] = np.exp(np.log(tmpImage[nX][nY]) * factor)
+                    image[wrap(width - nX, width)][wrap(height - nY, height)] \
+                        = np.exp(np.log(tmpImage[nX][nY]) * factor)
                 else:
-                    image[nX][nY] = tmpImage[nX][nY] * \
-                        (1 + 0.1 * gaussian(nY, nX, x, y, stdDev))
+                    image[nX][nY] = tmpImage[nX][nY] * factor
 
     return image
 
