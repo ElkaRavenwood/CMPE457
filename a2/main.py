@@ -857,13 +857,13 @@ def modulatePixels(image, x, y, isFT):
         for nY in nxRange:
             if editMode == b's':
                 if isFT:
-                    image[nX][nY] = tmpImage[nX][nY]
+                    image[nX][nY] = np.exp(np.log(tmpImage[nX][nY])*(1 - gaussian(nY, nX, x, y, stdDev)))
                 else:
                     image[nX][nY] = tmpImage[nX][nY] * \
                         (1 - gaussian(nY, nX, x, y, stdDev))
             elif editMode == b'a':
                 if isFT:
-                    image[nX][nY] = tmpImage[nX][nY]
+                    image[nX][nY] = np.exp(np.log(tmpImage[nX][nY])*(1 + 0.1 + gaussian(nY, nX, x, y, stdDev)))
                 else:
                     image[nX][nY] = tmpImage[nX][nY] * \
                         (1 + 0.1 * gaussian(nY, nX, x, y, stdDev))
