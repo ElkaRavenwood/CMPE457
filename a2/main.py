@@ -825,6 +825,13 @@ def mouseMotion(x, y):
 # image[y][x] should also be made at image[-y][-x], which is really
 # stored in image[ydim-1-y][xdim-1-x].
 
+def gaussian(image, meanX, meanY, SD):
+  for x in range(image.shape[0]):
+    for y in range(image.shape[1]):
+      val = 1/(2 * math.pi * SD * SD) * math.exp(- (x - meanX)**2 / (2*SD*SD) + (y-meanY)**2 / (2*SD*SD))
+    #   print(val)
+    #   print("\t")
+    # print("\n")
 
 def modulatePixels(image, x, y, isFT):
     global radius
@@ -834,6 +841,11 @@ def modulatePixels(image, x, y, isFT):
     width = len(image)
     height = len(image[0])
 
+    x = int(x)
+    y = int(y)
+
+    gaussian(image, x, y, stdDev)
+
     neighbourStartX = max(0, x - radius)
     neighbourStartY = max(0, y - radius)
     neighbourEndX = min(width, x + radius)
@@ -842,6 +854,7 @@ def modulatePixels(image, x, y, isFT):
     nxRange = range(neighbourStartX, neighbourEndX)
     nyRange = range(neighbourStartY, neighbourEndY)
 
+    
     for x in nxRange:
         for y in nyRange:
             if editMode == 's':
