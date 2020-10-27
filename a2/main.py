@@ -165,8 +165,6 @@ def inverseFT(image):
 def multiplyFTs(image, filter):
 
     # YOUR CODE HERE
-    print("multiplyFTs")
-    print(filter)
 
     # N = filter.shape[0]
     # M = filter.shape[1]
@@ -180,9 +178,18 @@ def multiplyFTs(image, filter):
     #   filter = filter * math.exp(math.pi * x * N**2)
     # for y in range(M):
     #   filter = filter * math.exp(math.pi * y * N**2)
+    n = len(filter)
+    m = len(filter[0])
+    filterX = np.array(list(map(lambda s: s[1] * np.exp(2 * math.pi * 1j * s[0] * (n/2) / n), enumerate(filter))))
+    filterX = filterX.T
+    filterXY = np.array(list(map(lambda s: s[1] * np.exp(2 * math.pi * 1j * s[0] * (m/2) / m), enumerate(filterX))))
+    shiftedFilter = filterXY.T
+    newImageFT = image * shiftedFilter
+    # newImage = inverseFT(newImageFT)
+    return newImageFT
 
     # return modified
-    return np.convolve(image, filter)  # (this is wrong)
+    #return np.convolve(image, filter)  # (this is wrong)
 
 
 # Set up the display and draw the current image
@@ -458,7 +465,7 @@ def keyboard(key, x, y):
     if key == b'\033':  # ESC = exit
         sys.exit(0)
 
-    elif key == 'I':
+    elif key == b'I':
 
         if useTK:
             imagePath = tkFileDialog.askopenfilename(initialdir=imageDir)
@@ -474,7 +481,7 @@ def keyboard(key, x, y):
         product = None  # clear the product
         productFT = None
 
-    elif key == 'F':
+    elif key == b'F':
 
         if useTK:
             filterPath = tkFileDialog.askopenfilename(initialdir=filterDir)
@@ -488,32 +495,32 @@ def keyboard(key, x, y):
         product = None  # clear the product
         productFT = None
 
-    elif key == 'm':
+    elif key == b'm':
         showMagnitude = not showMagnitude
 
-    elif key == 'h':
+    elif key == b'h':
         doHistoEq = not doHistoEq
 
-    elif key == 'x' and filterFT is not None and imageFT is not None:
+    elif key == b'x' and filterFT is not None and imageFT is not None:
         productFT = multiplyFTs(imageFT, filterFT)
 
-    elif key == '+' or key == '=':
+    elif key == b'+' or key == b'=':
         radius = radius + 2
         print('radius', radius)
 
-    elif key == '-' or key == '_':
+    elif key == b'-' or key == b'_':
         radius = radius - 2
         if radius < 2:
             radius = 2
         print('radius', radius)
 
-    elif key in ['a', 's']:
+    elif key in [b'a', b's']:
         editMode = key
 
-    elif key == 'c':
+    elif key == b'c':
         centreFT = not centreFT
 
-    elif key == 'z':
+    elif key == b'z':
         zoom = 1
         translate = (0, 0)
 
