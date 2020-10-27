@@ -5,7 +5,9 @@
 #   numpy, PyOpenGL, Pillow
 
 
-import sys, os, math
+import sys
+import os
+import math
 
 import numpy as np
 
@@ -18,10 +20,11 @@ from OpenGL.GLU import *
 
 # Globals
 
-windowWidth  = 1000 # window dimensions
-windowHeight =  800
+windowWidth = 1000  # window dimensions
+windowHeight = 800
 
-showMagnitude = True            # for the FT, show the magnitude.  Otherwise, show the phase
+# for the FT, show the magnitude.  Otherwise, show the phase
+showMagnitude = True
 doHistoEq = False               # do histogram equalization on the FT
 centreFT = True
 print(1)
@@ -31,7 +34,7 @@ print(2)
 radius = 10                     # editing radius
 editMode = 's'                  # editing mode: 'a' = additive; 's' = subtractive
 zoom = 1.0                      # amount by which to zoom images
-translate = (0.0,0.0)           # amount by which to translate images
+translate = (0.0, 0.0)           # amount by which to translate images
 
 
 useTK = False
@@ -39,36 +42,36 @@ useTK = False
 
 # Image
 
-imageDir      = 'images'
+imageDir = 'images'
 imageFilename = 'spitfire.jpg'
-imagePath     = os.path.join( imageDir, imageFilename )
+imagePath = os.path.join(imageDir, imageFilename)
 
-image    = None                   # the image as a 2D np.array
-imageFT  = None                   # the image's FT as a 2D np.array
+image = None                   # the image as a 2D np.array
+imageFT = None                   # the image's FT as a 2D np.array
 
 # Filter
 
-filterDir      = 'filters'
+filterDir = 'filters'
 filterFilename = 'gaussian7'
-filterPath     = os.path.join( filterDir, filterFilename )
+filterPath = os.path.join(filterDir, filterFilename)
 
-filter   = None                   # the filter as a 2D np.array
+filter = None                   # the filter as a 2D np.array
 filterFT = None                   # the filter's FT as a 2D np.array
 
 
 # Product of two FTs
 
-product   = None
+product = None
 productFT = None
 
 
 # File dialog
 
 if useTK:
-  import Tkinter, tkFileDialog
-  root = Tkinter.Tk()
-  root.withdraw()
-
+    import Tkinter
+    import tkFileDialog
+    root = Tkinter.Tk()
+    root.withdraw()
 
 
 # 1D FT
@@ -77,37 +80,46 @@ if useTK:
 #
 # Do not change this code.
 
-def ft1D( signal ):
+def ft1D(signal):
 
-  return np.fft.fft( signal )
+    return np.fft.fft(signal)
 
 
 # Do a forward FT
 #
 # Input is a 2D numpy array of complex values.
 # Output is the same.
+import copy
 
-def forwardFT( image ):
 
-  # YOUR CODE HERE
-  #
-  # You must replace this code with your own, keeping the same function name are parameters.
-  print("forwardFT")
-  
-  rows = np.zeros(len(image))
-  cols = np.zeros(len(image[0]))
-  modified = np.zeros_like(image, dtype="complex")
+def forwardFT(image):
 
-  for x in range(image.shape[0]):
-    modified[x, :] = ft1D(image[x, :])
+    # YOUR CODE HERE
+    #
+    # You must replace this code with your own, keeping the same function name are parameters.
+    # print("forwardFT")
 
-  for y in range(image.shape[1]):
-    modified[:, y] = ft1D(modified[:, y])
+    # rows = np.zeros(len(image))
+    # cols = np.zeros(len(image[0]))
+    # modified = np.zeros_like(image, dtype="complex")
 
-  # print(modified)
-  return modified
-  # return np.fft.fft2( image )
+    # for x in range(image.shape[0]):
+        # modified[x, :] = ft1D(image[x, :])
 
+    # for y in range(image.shape[1]):
+        # modified[:, y] = ft1D(modified[:, y])
+
+    # print(modified)
+    # return modified
+    # return np.fft.fft2( image )
+    ftXV = copy.deepcopy(image)
+    ftUV = copy.deepcopy(image).T
+
+    ftXV = np.array(list(map(ft1D, image)))
+    ftXV = ftXV.T
+    ftUV = np.array(list(map(ft1D, ftXV)))
+
+    return ftUV.T
 
 
 # Do an inverse FT
@@ -115,30 +127,29 @@ def forwardFT( image ):
 # Input is a 2D numpy array of complex values.
 # Output is the same.
 
-def inverseFT( image ):
-  # YOUR CODE HERE
-  #
-  # You must replace this code with your own, keeping the same function name are parameters.
-  print("inverseFT")
+def inverseFT(image):
+    # YOUR CODE HERE
+    #
+    # You must replace this code with your own, keeping the same function name are parameters.
+    print("inverseFT")
 
-  modified = np.zeros_like(image, dtype = "complex")
+    modified = np.zeros_like(image, dtype="complex")
 
-  N = image.shape[0]
-  M = image.shape[1]
+    N = image.shape[0]
+    M = image.shape[1]
 
-  # image = image.conjugate()
-  for x in range(N):
+    # image = image.conjugate()
+    for x in range(N):
+        for y in range(M):
+            image[x, y] = complex(image[x, y].real, - image[x, y].imag)
+    for x in range(N):
+        modified[x, :] = ft1D((image[x, :]))
+
     for y in range(M):
-      image[x, y] = complex(image[x,y].real, - image[x, y].imag)
-  for x in range(N):
-    modified[x, :] = ft1D((image[x, :]))
+        modified[:, y] = ft1D((modified[:, y]))
 
-  for y in range(M):
-    modified[:, y] = ft1D((modified[:, y]))
-
-  return modified
-  # return np.fft.ifft2( image )
-
+    return modified
+    # return np.fft.ifft2( image )
 
 
 # Multiply two FTs
@@ -151,30 +162,27 @@ def inverseFT( image ):
 # width N and by e^{2 pi i y (M/2)/M} for height M.
 
 
-def multiplyFTs( image, filter ):
+def multiplyFTs(image, filter):
 
-  # YOUR CODE HERE
-  print("multiplyFTs")
-  print(filter)
-  
-  # N = filter.shape[0]
-  # M = filter.shape[1]
-  # modified = numpy.zeros_like(image)
-  # for x in range(N):
-  #   filter = filter * math.exp(2 * math.pi * (x/2)/N)
-  # for y in range(M):
-  #   filter = filter * math.exp(2 * math.pi * (y/2)/M)
+    # YOUR CODE HERE
+    print("multiplyFTs")
+    print(filter)
 
+    # N = filter.shape[0]
+    # M = filter.shape[1]
+    # modified = numpy.zeros_like(image)
+    # for x in range(N):
+    #   filter = filter * math.exp(2 * math.pi * (x/2)/N)
+    # for y in range(M):
+    #   filter = filter * math.exp(2 * math.pi * (y/2)/M)
 
-  # for x in range(N):
-  #   filter = filter * math.exp(math.pi * x * N**2)
-  # for y in range(M):
-  #   filter = filter * math.exp(math.pi * y * N**2)
+    # for x in range(N):
+    #   filter = filter * math.exp(math.pi * x * N**2)
+    # for y in range(M):
+    #   filter = filter * math.exp(math.pi * y * N**2)
 
-  # return modified
-  return image # (this is wrong)
-  # return np.convolve(image, filter) 
-
+    # return modified
+    return np.convolve(image, filter)  # (this is wrong)
 
 
 # Set up the display and draw the current image
@@ -182,165 +190,169 @@ def multiplyFTs( image, filter ):
 
 def display():
 
-  # Clear window
+    # Clear window
 
-  glClearColor ( 1, 1, 1, 0 )
-  glClear( GL_COLOR_BUFFER_BIT )
+    glClearColor(1, 1, 1, 0)
+    glClear(GL_COLOR_BUFFER_BIT)
 
-  glMatrixMode( GL_PROJECTION )
-  glLoadIdentity()
+    glMatrixMode(GL_PROJECTION)
+    glLoadIdentity()
 
-  glMatrixMode( GL_MODELVIEW )
-  glLoadIdentity()
-  glOrtho( 0, windowWidth, 0, windowHeight, 0, 1 )
+    glMatrixMode(GL_MODELVIEW)
+    glLoadIdentity()
+    glOrtho(0, windowWidth, 0, windowHeight, 0, 1)
 
-  # Set up texturing
+    # Set up texturing
 
-  global texID
-  
-  if texID == None:
-    texID = glGenTextures(1)
+    global texID
 
-  glBindTexture( GL_TEXTURE_2D, texID )
+    if texID == None:
+        texID = glGenTextures(1)
 
-  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE)
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER)
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER)
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-  glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, [1,0,0,1] );
+    glBindTexture(GL_TEXTURE_2D, texID)
 
-  # Images to draw, in rows and columns
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE)
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER)
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER)
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, [1, 0, 0, 1])
 
-  toDraw, rows, cols, maxHeight, maxWidth, scale, horizSpacing, vertSpacing = getImagesInfo()
+    # Images to draw, in rows and columns
 
-  for r in range(rows):
-    for c in range(cols):
-      if toDraw[r][c] is not None:
+    toDraw, rows, cols, maxHeight, maxWidth, scale, horizSpacing, vertSpacing = getImagesInfo()
 
-        if r == 0: # normal image
-          img = toDraw[r][c]
-        else: # FT
-          if centreFT:
-            img = np.fft.fftshift( toDraw[r][c] ) # shift FT so that origin is in centre (just for display)
-          else:
-            img = toDraw[r][c]
+    for r in range(rows):
+        for c in range(cols):
+            if toDraw[r][c] is not None:
 
-        height = scale * img.shape[0]
-        width  = scale * img.shape[1]
+                if r == 0:  # normal image
+                    img = toDraw[r][c]
+                else:  # FT
+                    if centreFT:
+                        # shift FT so that origin is in centre (just for display)
+                        img = np.fft.fftshift(toDraw[r][c])
+                    else:
+                        img = toDraw[r][c]
 
-        # Find lower-left corner
+                height = scale * img.shape[0]
+                width = scale * img.shape[1]
 
-        baseX = (horizSpacing + maxWidth ) * c + horizSpacing
-        baseY = (vertSpacing  + maxHeight) * (rows-1-r) + vertSpacing
+                # Find lower-left corner
 
-        # Get pixels and draw
+                baseX = (horizSpacing + maxWidth) * c + horizSpacing
+                baseY = (vertSpacing + maxHeight) * (rows-1-r) + vertSpacing
 
-        if r == 0: # for images, show the real part of each pixel
-          show = np.real(img)
-        else: # for FT, show magnitude or phase
-          ak =  2 * np.real(img)
-          bk = -2 * np.imag(img)
-          if showMagnitude:
-            show = np.log( 1 + np.sqrt( ak*ak + bk*bk ) ) # take the log because there are a few very large values (e.g. the DC component)
-          else:
-            show = np.arctan2( -1 * bk, ak )
+                # Get pixels and draw
 
-          if doHistoEq and r > 0:
-            show = histoEq( show ) # optionally, perform histogram equalization on FT image (but this takes time!)
+                if r == 0:  # for images, show the real part of each pixel
+                    show = np.real(img)
+                else:  # for FT, show magnitude or phase
+                    ak = 2 * np.real(img)
+                    bk = -2 * np.imag(img)
+                    if showMagnitude:
+                        # take the log because there are a few very large values (e.g. the DC component)
+                        show = np.log(1 + np.sqrt(ak*ak + bk*bk))
+                    else:
+                        show = np.arctan2(-1 * bk, ak)
 
-        # Put the image into a texture, then draw it
+                    if doHistoEq and r > 0:
+                        # optionally, perform histogram equalization on FT image (but this takes time!)
+                        show = histoEq(show)
 
-        max = show.max()
-        min = show.min()
-        if max == min:
-          max = min+1
-          
-        imgData = np.array( (np.ravel(show) - min) / (max - min) * 255, np.uint8 )
+                # Put the image into a texture, then draw it
 
-        glBindTexture( GL_TEXTURE_2D, texID )
-        glTexImage2D( GL_TEXTURE_2D, 0, GL_INTENSITY, img.shape[1], img.shape[0], 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, imgData )
+                max = show.max()
+                min = show.min()
+                if max == min:
+                    max = min+1
 
-        # Include zoom and translate
+                imgData = np.array((np.ravel(show) - min) /
+                                   (max - min) * 255, np.uint8)
 
-        cx     = 0.5 - translate[0]/width
-        cy     = 0.5 - translate[1]/height
-        offset = 0.5 / zoom
+                glBindTexture(GL_TEXTURE_2D, texID)
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_INTENSITY,
+                             img.shape[1], img.shape[0], 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, imgData)
 
-        glEnable( GL_TEXTURE_2D )
+                # Include zoom and translate
 
-        glBegin( GL_QUADS )
-        glTexCoord2f( cx-offset, cy-offset )
-        glVertex2f( baseX, baseY )
-        glTexCoord2f( cx+offset, cy-offset )
-        glVertex2f( baseX+width, baseY )
-        glTexCoord2f( cx+offset, cy+offset )
-        glVertex2f( baseX+width, baseY+height )
-        glTexCoord2f( cx-offset, cy+offset )
-        glVertex2f( baseX, baseY+height )
-        glEnd()
+                cx = 0.5 - translate[0]/width
+                cy = 0.5 - translate[1]/height
+                offset = 0.5 / zoom
 
-        glDisable( GL_TEXTURE_2D )
+                glEnable(GL_TEXTURE_2D)
 
-        if zoom != 1 or translate != (0,0):
-          glColor3f( 0.8, 0.8, 0.8 )
-          glBegin( GL_LINE_LOOP )
-          glVertex2f( baseX, baseY )
-          glVertex2f( baseX+width, baseY )
-          glVertex2f( baseX+width, baseY+height )
-          glVertex2f( baseX, baseY+height )
-          glEnd()
+                glBegin(GL_QUADS)
+                glTexCoord2f(cx-offset, cy-offset)
+                glVertex2f(baseX, baseY)
+                glTexCoord2f(cx+offset, cy-offset)
+                glVertex2f(baseX+width, baseY)
+                glTexCoord2f(cx+offset, cy+offset)
+                glVertex2f(baseX+width, baseY+height)
+                glTexCoord2f(cx-offset, cy+offset)
+                glVertex2f(baseX, baseY+height)
+                glEnd()
 
-  # Draw image captions
+                glDisable(GL_TEXTURE_2D)
 
-  glColor3f( 0.2, 0.5, 0.7 )
- 
-  if image is not None:
-    baseX = horizSpacing
-    baseY = (vertSpacing  + maxHeight) * (rows) + 8
-    drawText( baseX, baseY, imageFilename )
+                if zoom != 1 or translate != (0, 0):
+                    glColor3f(0.8, 0.8, 0.8)
+                    glBegin(GL_LINE_LOOP)
+                    glVertex2f(baseX, baseY)
+                    glVertex2f(baseX+width, baseY)
+                    glVertex2f(baseX+width, baseY+height)
+                    glVertex2f(baseX, baseY+height)
+                    glEnd()
 
-  if imageFT is not None:
-    baseX = horizSpacing
-    baseY = (vertSpacing  + maxHeight) * (rows-2) + vertSpacing - 18
-    drawText( baseX, baseY, 'FT of %s' % imageFilename )
+    # Draw image captions
 
-  if filter is not None:
-    baseX = (horizSpacing + maxWidth) * 1 + horizSpacing
-    baseY = (vertSpacing  + maxHeight) * rows + 8
-    drawText( baseX, baseY, filterFilename )
+    glColor3f(0.2, 0.5, 0.7)
 
-  if filterFT is not None:
-    baseX = (horizSpacing + maxWidth) * 1 + horizSpacing
-    baseY = (vertSpacing  + maxHeight) * (rows-2) + vertSpacing - 18
-    drawText( baseX, baseY, 'FT of %s' % filterFilename )
+    if image is not None:
+        baseX = horizSpacing
+        baseY = (vertSpacing + maxHeight) * (rows) + 8
+        drawText(baseX, baseY, imageFilename)
 
-  if product is not None:
-    baseX = (horizSpacing + maxWidth) * 2 + horizSpacing
-    baseY = (vertSpacing  + maxHeight) * (rows) + 8
-    drawText( baseX, baseY, "inverse FT of product of FTs" )
-    
-  if productFT is not None:
-    baseX = (horizSpacing + maxWidth) * 2 + horizSpacing
-    baseY = (vertSpacing  + maxHeight) * (rows-2) + vertSpacing - 18
-    drawText( baseX, baseY, "product of FTs" )
+    if imageFT is not None:
+        baseX = horizSpacing
+        baseY = (vertSpacing + maxHeight) * (rows-2) + vertSpacing - 18
+        drawText(baseX, baseY, 'FT of %s' % imageFilename)
 
-  # Draw mode information
+    if filter is not None:
+        baseX = (horizSpacing + maxWidth) * 1 + horizSpacing
+        baseY = (vertSpacing + maxHeight) * rows + 8
+        drawText(baseX, baseY, filterFilename)
 
-  str = 'show %s, %s edits' % (('magnitudes' if showMagnitude else 'phases'),
-                               ('subtractive' if (editMode == 's') else 'additive'))
-  glColor3f( 0.5, 0.2, 0.4 )
-  drawText( windowWidth-len(str)*8-8, 12, str )
+    if filterFT is not None:
+        baseX = (horizSpacing + maxWidth) * 1 + horizSpacing
+        baseY = (vertSpacing + maxHeight) * (rows-2) + vertSpacing - 18
+        drawText(baseX, baseY, 'FT of %s' % filterFilename)
 
-  # Done
+    if product is not None:
+        baseX = (horizSpacing + maxWidth) * 2 + horizSpacing
+        baseY = (vertSpacing + maxHeight) * (rows) + 8
+        drawText(baseX, baseY, "inverse FT of product of FTs")
 
-  glutSwapBuffers()
+    if productFT is not None:
+        baseX = (horizSpacing + maxWidth) * 2 + horizSpacing
+        baseY = (vertSpacing + maxHeight) * (rows-2) + vertSpacing - 18
+        drawText(baseX, baseY, "product of FTs")
 
-  
+    # Draw mode information
+
+    str = 'show %s, %s edits' % (('magnitudes' if showMagnitude else 'phases'),
+                                 ('subtractive' if (editMode == 's') else 'additive'))
+    glColor3f(0.5, 0.2, 0.4)
+    drawText(windowWidth-len(str)*8-8, 12, str)
+
+    # Done
+
+    glutSwapBuffers()
+
 
 # Get information about how to place the images.
 #
-# toDraw                       2D array of complex images 
+# toDraw                       2D array of complex images
 # rows, cols                   rows and columns in array
 # maxHeight, maxWidth          max height and width of images
 # scale                        amount by which to scale images
@@ -349,165 +361,164 @@ def display():
 
 def getImagesInfo():
 
-  toDraw = [ [ image,   filter,   product   ],
-             [ imageFT, filterFT, productFT ] ]
+    toDraw = [[image,   filter,   product],
+              [imageFT, filterFT, productFT]]
 
-  rows = len(toDraw)
-  cols = len(toDraw[0])
+    rows = len(toDraw)
+    cols = len(toDraw[0])
 
-  # Find max image dimensions
+    # Find max image dimensions
 
-  maxHeight = 0
-  maxWidth  = 0
-  
-  for row in toDraw:
-    for img in row:
-      if img is not None:
-        if img.shape[0] > maxHeight:
-          maxHeight = img.shape[0]
-        if img.shape[1] > maxWidth:
-          maxWidth = img.shape[1]
+    maxHeight = 0
+    maxWidth = 0
 
-  # Scale everything to fit in the window
+    for row in toDraw:
+        for img in row:
+            if img is not None:
+                if img.shape[0] > maxHeight:
+                    maxHeight = img.shape[0]
+                if img.shape[1] > maxWidth:
+                    maxWidth = img.shape[1]
 
-  minSpacing = 30 # minimum spacing between images
+    # Scale everything to fit in the window
 
-  scaleX = (windowWidth  - (cols+1)*minSpacing) / float(maxWidth  * cols)
-  scaleY = (windowHeight - (rows+1)*minSpacing) / float(maxHeight * rows)
+    minSpacing = 30  # minimum spacing between images
 
-  if scaleX < scaleY:
-    scale = scaleX
-  else:
-    scale = scaleY
+    scaleX = (windowWidth - (cols+1)*minSpacing) / float(maxWidth * cols)
+    scaleY = (windowHeight - (rows+1)*minSpacing) / float(maxHeight * rows)
 
-  maxWidth  = scale * maxWidth
-  maxHeight = scale * maxHeight
+    if scaleX < scaleY:
+        scale = scaleX
+    else:
+        scale = scaleY
 
-  # Draw each image
+    maxWidth = scale * maxWidth
+    maxHeight = scale * maxHeight
 
-  horizSpacing = (windowWidth-cols*maxWidth)/(cols+1)
-  vertSpacing  = (windowHeight-rows*maxHeight)/(rows+1)
+    # Draw each image
 
-  return toDraw, rows, cols, maxHeight, maxWidth, scale, horizSpacing, vertSpacing
-  
+    horizSpacing = (windowWidth-cols*maxWidth)/(cols+1)
+    vertSpacing = (windowHeight-rows*maxHeight)/(rows+1)
 
-  
+    return toDraw, rows, cols, maxHeight, maxWidth, scale, horizSpacing, vertSpacing
+
+
 # Equalize the image histogram
 
-def histoEq( pixels ):
+def histoEq(pixels):
 
-  # build histogram
+    # build histogram
 
-  h = [0] * 256 # counts
+    h = [0] * 256  # counts
 
-  width  = pixels.shape[0]
-  height = pixels.shape[1]
+    width = pixels.shape[0]
+    height = pixels.shape[1]
 
-  min = pixels.min()
-  max = pixels.max()
-  if max == min:
-    max = min+1
+    min = pixels.min()
+    max = pixels.max()
+    if max == min:
+        max = min+1
 
-  for i in range(width):
-    for j in range(height):
-      y = int( (pixels[i,j] - min) / (max-min) * 255 )
-      h[y] = h[y] + 1
+    for i in range(width):
+        for j in range(height):
+            y = int((pixels[i, j] - min) / (max-min) * 255)
+            h[y] = h[y] + 1
 
-  # Build T[r] = s
+    # Build T[r] = s
 
-  k = 256.0 / float(width * height) # common factor applied to all entries
+    k = 256.0 / float(width * height)  # common factor applied to all entries
 
-  T = [0] * 256 # lookup table
-  
-  sum = 0
-  for i in range(256):
-    sum = sum + h[i]
-    T[i] = int( math.floor(k * sum) - 1 )
-    if T[i] < 0:
-      T[i] = 0
+    T = [0] * 256  # lookup table
 
-  # Apply T[r]
+    sum = 0
+    for i in range(256):
+        sum = sum + h[i]
+        T[i] = int(math.floor(k * sum) - 1)
+        if T[i] < 0:
+            T[i] = 0
 
-  result = np.empty( pixels.shape )
+    # Apply T[r]
 
-  for i in range(width):
-    for j in range(height):
-      y = int( (pixels[i,j] - min) / (max - min) * 255 )
-      result[i,j] = T[y]
+    result = np.empty(pixels.shape)
 
-  return result
-  
+    for i in range(width):
+        for j in range(height):
+            y = int((pixels[i, j] - min) / (max - min) * 255)
+            result[i, j] = T[y]
+
+    return result
+
 
 # Handle keyboard input
 
-def keyboard( key, x, y ):
+def keyboard(key, x, y):
 
-  global image, filter, product, showMagnitude, doHistoEq, productFT, filterFT, imageFT, imageFilename, filterFilename, filterPath, radius, editMode, zoom, translate, centreFT
+    global image, filter, product, showMagnitude, doHistoEq, productFT, filterFT, imageFT, imageFilename, filterFilename, filterPath, radius, editMode, zoom, translate, centreFT
 
-  if key == b'\033': # ESC = exit
-    sys.exit(0)
+    if key == b'\033':  # ESC = exit
+        sys.exit(0)
 
-  elif key == 'I':
+    elif key == 'I':
 
-    if useTK:
-      imagePath = tkFileDialog.askopenfilename( initialdir = imageDir )
-      if imagePath:
-        image = loadImage( imagePath )
-        imageFilename = os.path.basename( imagePath )
-        imageFT = None
+        if useTK:
+            imagePath = tkFileDialog.askopenfilename(initialdir=imageDir)
+            if imagePath:
+                image = loadImage(imagePath)
+                imageFilename = os.path.basename(imagePath)
+                imageFT = None
 
-    if filterPath: # reload the filter so that it's resized to match the image
-      filter = loadFilter( filterPath )
-      filterFT = None
+        if filterPath:  # reload the filter so that it's resized to match the image
+            filter = loadFilter(filterPath)
+            filterFT = None
 
-    product = None # clear the product
-    productFT = None
+        product = None  # clear the product
+        productFT = None
 
-  elif key == 'F':
+    elif key == 'F':
 
-    if useTK:
-      filterPath = tkFileDialog.askopenfilename( initialdir = filterDir )
-      if filterPath:
-        filter = loadFilter( filterPath )
-        filterFilename = os.path.basename( filterPath )
-      else:
-        filter = None
-      filterFT = None
-      
-    product = None # clear the product
-    productFT = None
+        if useTK:
+            filterPath = tkFileDialog.askopenfilename(initialdir=filterDir)
+            if filterPath:
+                filter = loadFilter(filterPath)
+                filterFilename = os.path.basename(filterPath)
+            else:
+                filter = None
+            filterFT = None
 
-  elif key == 'm':
-    showMagnitude = not showMagnitude
+        product = None  # clear the product
+        productFT = None
 
-  elif key == 'h':
-    doHistoEq = not doHistoEq
+    elif key == 'm':
+        showMagnitude = not showMagnitude
 
-  elif key == 'x' and filterFT is not None and imageFT is not None:
-    productFT = multiplyFTs( imageFT, filterFT )
+    elif key == 'h':
+        doHistoEq = not doHistoEq
 
-  elif key == '+' or key == '=':
-    radius = radius + 2
-    print( 'radius', radius )
+    elif key == 'x' and filterFT is not None and imageFT is not None:
+        productFT = multiplyFTs(imageFT, filterFT)
 
-  elif key == '-' or key == '_':
-    radius = radius - 2
-    if radius < 2:
-      radius = 2
-    print( 'radius', radius )
+    elif key == '+' or key == '=':
+        radius = radius + 2
+        print('radius', radius)
 
-  elif key in ['a','s']:
-    editMode = key
+    elif key == '-' or key == '_':
+        radius = radius - 2
+        if radius < 2:
+            radius = 2
+        print('radius', radius)
 
-  elif key == 'c':
-    centreFT = not centreFT
+    elif key in ['a', 's']:
+        editMode = key
 
-  elif key == 'z':
-    zoom = 1
-    translate = (0,0)
+    elif key == 'c':
+        centreFT = not centreFT
 
-  else:
-    print( '''keys:
+    elif key == 'z':
+        zoom = 1
+        translate = (0, 0)
+
+    else:
+        print('''keys:
            m  toggle between magnitude and phase in the FT  
            h  toggle histogram equalization in the FT  
            I  load image
@@ -520,23 +531,22 @@ def keyboard( key, x, y ):
 
               translate with left mouse dragging
               zoom with right mouse draggin up/down
-           z  reset the translation and zoom''' )
+           z  reset the translation and zoom''')
 
-  glutPostRedisplay()
+    glutPostRedisplay()
 
 
 # Handle special key (e.g. arrows) input
 
-def special( key, x, y ):
+def special(key, x, y):
 
-  if key == GLUT_KEY_DOWN:
-    forwardFT_all()
+    if key == GLUT_KEY_DOWN:
+        forwardFT_all()
 
-  elif key == GLUT_KEY_UP:
-    inverseFT_all()
+    elif key == GLUT_KEY_UP:
+        inverseFT_all()
 
-  glutPostRedisplay()
-
+    glutPostRedisplay()
 
 
 # Do a forward FT to all images
@@ -544,15 +554,14 @@ def special( key, x, y ):
 
 def forwardFT_all():
 
-  global image, filter, product, imageFT, filterFT, productFT
+    global image, filter, product, imageFT, filterFT, productFT
 
-  if image is not None:
-    imageFT = forwardFT( image )
-  if filter is not None:
-    filterFT = forwardFT( filter )
-  if product is not None:
-    productFT = forwardFT( product )
-
+    if image is not None:
+        imageFT = forwardFT(image)
+    if filter is not None:
+        filterFT = forwardFT(filter)
+    if product is not None:
+        productFT = forwardFT(product)
 
 
 # Do an inverse FT to all image FTs
@@ -560,31 +569,30 @@ def forwardFT_all():
 
 def inverseFT_all():
 
-  global image, filter, product, imageFT, filterFT, productFT
+    global image, filter, product, imageFT, filterFT, productFT
 
-  if image is not None: 
-    image = inverseFT( imageFT )
-  if filter is not None:
-    filter = inverseFT( filterFT )
-  if productFT is not None:
-    product = inverseFT( productFT )
+    if image is not None:
+        image = inverseFT(imageFT)
+    if filter is not None:
+        filter = inverseFT(filterFT)
+    if productFT is not None:
+        product = inverseFT(productFT)
 
-    
+
 # Load an image
 #
 # Return the image as a 2D numpy array of complex_ values.
 
 
-def loadImage( path ):
+def loadImage(path):
 
-  try:
-    img = Image.open( path ).convert( 'L' ).transpose( Image.FLIP_TOP_BOTTOM )
-  except:
-    print( 'Failed to load image %s' % path )
-    sys.exit(1)
+    try:
+        img = Image.open(path).convert('L').transpose(Image.FLIP_TOP_BOTTOM)
+    except:
+        print('Failed to load image %s' % path)
+        sys.exit(1)
 
-  return np.array( list( img.getdata() ), np.complex_ ).reshape( (img.size[1],img.size[0]) )
-
+    return np.array(list(img.getdata()), np.complex_).reshape((img.size[1], img.size[0]))
 
 
 # Load a filter
@@ -592,58 +600,57 @@ def loadImage( path ):
 # Return the filter as a 2D numpy array of complete_ values.
 
 
-def loadFilter( path ):
+def loadFilter(path):
 
-  try:
-    with open( path, 'r' ) as f:
+    try:
+        with open(path, 'r') as f:
 
-      line = f.readline().split()
-      xdim = int(line[0])
-      ydim = int(line[1])
+            line = f.readline().split()
+            xdim = int(line[0])
+            ydim = int(line[1])
 
-      line = f.readline()
-      scale = float(line)
+            line = f.readline()
+            scale = float(line)
 
-      kernel = []
+            kernel = []
 
-      for i in range(ydim):
-        for x in f.readline().split():
-          kernel.append( scale*float(x) ) # apply scaling factor here
-  except:
-    print( 'Failed to load filter %s' % path )
-    sys.exit(1)
+            for i in range(ydim):
+                for x in f.readline().split():
+                    kernel.append(scale*float(x))  # apply scaling factor here
+    except:
+        print('Failed to load filter %s' % path)
+        sys.exit(1)
 
-  # Place the kernel at the centre of an array with the same dimensions as the image.
+    # Place the kernel at the centre of an array with the same dimensions as the image.
 
-  if image is None:
-    result = np.zeros( (ydim,xdim) ) # only a kernel
-  else:
-    result = np.zeros( (image.shape[0], image.shape[1]) )
+    if image is None:
+        result = np.zeros((ydim, xdim))  # only a kernel
+    else:
+        result = np.zeros((image.shape[0], image.shape[1]))
 
-  cy = result.shape[0]/2 - ydim/2
-  cx = result.shape[1]/2 - xdim/2 
+    cy = result.shape[0]/2 - ydim/2
+    cx = result.shape[1]/2 - xdim/2
 
-  for y in range(ydim):
-    for x in range(xdim):
-      result[(int)(y+cy),(int)(x+cx)] = kernel.pop(0) # image is indexed as row,column
-      
-  return result
+    for y in range(ydim):
+        for x in range(xdim):
+            # image is indexed as row,column
+            result[(int)(y+cy), (int)(x+cx)] = kernel.pop(0)
 
+    return result
 
 
 # Handle window reshape
 
-def reshape( newWidth, newHeight ):
+def reshape(newWidth, newHeight):
 
-  global windowWidth, windowHeight
+    global windowWidth, windowHeight
 
-  windowWidth  = newWidth
-  windowHeight = newHeight
+    windowWidth = newWidth
+    windowHeight = newHeight
 
-  glViewport( 0, 0, windowWidth, windowHeight )
+    glViewport(0, 0, windowWidth, windowHeight)
 
-  glutPostRedisplay()
-
+    glutPostRedisplay()
 
 
 # Output an image
@@ -651,115 +658,116 @@ def reshape( newWidth, newHeight ):
 # The image has complex values, so output either the magnitudes or the
 # phases, according to the 'outputMagnitudes' parameter.
 
-def outputImage( image, filename, outputMagnitudes, isFT ):
+def outputImage(image, filename, outputMagnitudes, isFT):
 
-  if not isFT:
-    show = np.real(image)
-  else:
-    ak =  2 * np.real(image)
-    bk = -2 * np.imag(image)
-    if outputMagnitudes:
-      show = np.log( 1 + np.sqrt( ak*ak + bk*bk ) ) # take the log because there are a few very large values (e.g. the DC component)
+    if not isFT:
+        show = np.real(image)
     else:
-      show = np.arctan2( -1 * bk, ak )
-    show = np.fft.fftshift( show ) # shift FT so that origin is in centre
+        ak = 2 * np.real(image)
+        bk = -2 * np.imag(image)
+        if outputMagnitudes:
+            # take the log because there are a few very large values (e.g. the DC component)
+            show = np.log(1 + np.sqrt(ak*ak + bk*bk))
+        else:
+            show = np.arctan2(-1 * bk, ak)
+        show = np.fft.fftshift(show)  # shift FT so that origin is in centre
 
-  min = show.min()
-  max = show.max()
+    min = show.min()
+    max = show.max()
 
-  img = Image.fromarray( np.uint8( (show - min) * (255 / (max-min)) ) ).transpose( Image.FLIP_TOP_BOTTOM )
+    img = Image.fromarray(
+        np.uint8((show - min) * (255 / (max-min)))).transpose(Image.FLIP_TOP_BOTTOM)
 
-  img.save( filename )
-
-
+    img.save(filename)
 
 
 # Draw text in window
 
-def drawText( x, y, text ):
+def drawText(x, y, text):
 
-  glRasterPos( x, y )
-  for ch in text:
-    glutBitmapCharacter( GLUT_BITMAP_8_BY_13, ord(ch) )
+    glRasterPos(x, y)
+    for ch in text:
+        glutBitmapCharacter(GLUT_BITMAP_8_BY_13, ord(ch))
 
-    
 
 # Handle mouse click
-
 
 currentButton = None
 initX = 0
 initY = 0
 initZoom = 0
-initTranslate = (0,0)
+initTranslate = (0, 0)
 
-def mouse( button, state, x, y ):
 
-  global currentButton, initX, initY, initZoom, initTranslate
+def mouse(button, state, x, y):
 
-  if state == GLUT_DOWN:
+    global currentButton, initX, initY, initZoom, initTranslate
 
-    currentButton = button
-    initX = x
-    initY = y
-    initZoom = zoom
-    initTranslate = translate
+    if state == GLUT_DOWN:
 
-  elif state == GLUT_UP:
+        currentButton = button
+        initX = x
+        initY = y
+        initZoom = zoom
+        initTranslate = translate
 
-    currentButton = None
+    elif state == GLUT_UP:
 
-    if button == GLUT_LEFT_BUTTON and initX == x and initY == y: # Process a left click (with no dragging)
+        currentButton = None
 
-      # Find which image the click is in
+        # Process a left click (with no dragging)
+        if button == GLUT_LEFT_BUTTON and initX == x and initY == y:
 
-      toDraw, rows, cols, maxHeight, maxWidth, scale, horizSpacing, vertSpacing = getImagesInfo()
+            # Find which image the click is in
 
-      row = (y-vertSpacing ) / float(maxHeight+vertSpacing)
-      col = (x-horizSpacing) / float(maxWidth+horizSpacing)
+            toDraw, rows, cols, maxHeight, maxWidth, scale, horizSpacing, vertSpacing = getImagesInfo()
 
-      if row < 0 or row-math.floor(row) > maxHeight/(maxHeight+vertSpacing):
-        return
+            row = (y-vertSpacing) / float(maxHeight+vertSpacing)
+            col = (x-horizSpacing) / float(maxWidth+horizSpacing)
 
-      if col < 0 or col-math.floor(col) > maxWidth/(maxWidth+horizSpacing):
-        return
+            if row < 0 or row-math.floor(row) > maxHeight/(maxHeight+vertSpacing):
+                return
 
-      # Get the image
+            if col < 0 or col-math.floor(col) > maxWidth/(maxWidth+horizSpacing):
+                return
 
-      image = toDraw[ int(row) ][ int(col) ]
+            # Get the image
 
-      if image is None:
-        return
+            image = toDraw[int(row)][int(col)]
 
-      # Find pixel within image
+            if image is None:
+                return
 
-      pixelX = int((col-math.floor(col)) / (maxWidth /float(maxWidth +horizSpacing)) * image.shape[1])
-      pixelY = image.shape[0] - 1 - int((row-math.floor(row)) / (maxHeight/float(maxHeight+vertSpacing )) * image.shape[0])
+            # Find pixel within image
 
-      # for the FT images, move the position half up and half right,
-      # since the image is displayed with that shift, while the FT array
-      # stores the unshifted values.
+            pixelX = int((col-math.floor(col)) / (maxWidth /
+                                                  float(maxWidth + horizSpacing)) * image.shape[1])
+            pixelY = image.shape[0] - 1 - int((row-math.floor(row)) / (
+                maxHeight/float(maxHeight+vertSpacing)) * image.shape[0])
 
-      isFT = (int(row) == 1)
+            # for the FT images, move the position half up and half right,
+            # since the image is displayed with that shift, while the FT array
+            # stores the unshifted values.
 
-      if isFT:
-        pixelX = pixelX - image.shape[1]/2
-        if pixelX < 0:
-          pixelX = pixelX + image.shape[1]
-        pixelY = pixelY - image.shape[0]/2
-        if pixelY < 0:
-          pixelY = pixelY + image.shape[0]
+            isFT = (int(row) == 1)
 
-      # Perform the operation
+            if isFT:
+                pixelX = pixelX - image.shape[1]/2
+                if pixelX < 0:
+                    pixelX = pixelX + image.shape[1]
+                pixelY = pixelY - image.shape[0]/2
+                if pixelY < 0:
+                    pixelY = pixelY + image.shape[0]
 
-      modulatePixels( image, pixelX, pixelY, isFT )
+            # Perform the operation
 
-      print( 'click at', pixelX, pixelY )
+            modulatePixels(image, pixelX, pixelY, isFT)
 
-      # Done
+            print('click at', pixelX, pixelY)
 
-      glutPostRedisplay()
+            # Done
 
+            glutPostRedisplay()
 
 
 # Handle mouse dragging
@@ -768,28 +776,29 @@ def mouse( button, state, x, y ):
 # Translate with left button dragging.
 
 
-def mouseMotion( x, y ):
+def mouseMotion(x, y):
 
-  global zoom, translate
+    global zoom, translate
 
-  if currentButton == GLUT_RIGHT_BUTTON:
+    if currentButton == GLUT_RIGHT_BUTTON:
 
-    # zoom
+        # zoom
 
-    factor = 1 # controls the zoom rate
-    
-    if y > initY: # zoom in
-      zoom = initZoom * (1 + factor*(y-initY)/float(windowHeight))
-    else: # zoom out
-      zoom = initZoom / (1 + factor*(initY-y)/float(windowHeight))
+        factor = 1  # controls the zoom rate
 
-  elif currentButton == GLUT_LEFT_BUTTON:
+        if y > initY:  # zoom in
+            zoom = initZoom * (1 + factor*(y-initY)/float(windowHeight))
+        else:  # zoom out
+            zoom = initZoom / (1 + factor*(initY-y)/float(windowHeight))
 
-    # translate
+    elif currentButton == GLUT_LEFT_BUTTON:
 
-    translate = ( initTranslate[0] + (x-initX)/zoom, initTranslate[1] + (initY-y)/zoom )
+        # translate
 
-  glutPostRedisplay()
+        translate = (initTranslate[0] + (x-initX) /
+                     zoom, initTranslate[1] + (initY-y)/zoom)
+
+    glutPostRedisplay()
 
 
 # Modulate the image pixels within a given radius around (x,y).
@@ -812,27 +821,25 @@ def mouseMotion( x, y ):
 # stored in image[ydim-1-y][xdim-1-x].
 
 
-def modulatePixels( image, x, y, isFT ):
+def modulatePixels(image, x, y, isFT):
 
-  # YOUR CODE HERE
+    # YOUR CODE HERE
 
-  pass
-
+    pass
 
 
 # For an image coordinate, if it's < 0 or >= max, wrap the coorindate
 # around so that it's in the range [0,max-1].  This is useful in the
 # modulatePixels() function when dealing with FT images.
 
-def wrap( val, max ):
+def wrap(val, max):
 
-  if val < 0:
-    return val+max
-  elif val >= max:
-    return val-max
-  else:
-    return val
-
+    if val < 0:
+        return val+max
+    elif val >= max:
+        return val-max
+    else:
+        return val
 
 
 # Load initial data
@@ -840,17 +847,16 @@ def wrap( val, max ):
 # The command line (stored in sys.argv) could have:
 #
 #     main.py {image filename} {filter filename}
-
 if len(sys.argv) > 1:
-  imageFilename = sys.argv[1]
-  imagePath = os.path.join( imageDir,  imageFilename  )
+    imageFilename = sys.argv[1]
+    imagePath = os.path.join(imageDir,  imageFilename)
 
 if len(sys.argv) > 2:
-  filterFilename = sys.argv[2]
-  filterPath = os.path.join( filterDir, filterFilename )
+    filterFilename = sys.argv[2]
+    filterPath = os.path.join(filterDir, filterFilename)
 
-image  = loadImage(  imagePath  )
-filter = loadFilter( filterPath )
+image = loadImage(imagePath)
+filter = loadFilter(filterPath)
 
 
 # If commands exist on the command line (i.e. there are more than two
@@ -859,42 +865,45 @@ filter = loadFilter( filterPath )
 
 if len(sys.argv) > 3:
 
-  outputMagnitudes = True
+    outputMagnitudes = True
 
-  # process commands
+    # process commands
 
-  cmds = sys.argv[3:]
+    cmds = sys.argv[3:]
 
-  while len(cmds) > 0:
-    cmd = cmds.pop(0)
-    if cmd == 'f':
-      forwardFT_all()
-    elif cmd == 'i':
-      inverseFT_all()
-    elif cmd == 'm':
-      outputMagnitudes = True
-    elif cmd == 'p':
-      outputMagnitudes = False
-    elif cmd == 'x':
-      productFT = multiplyFTs( imageFT, filterFT )
-    elif cmd[0] in ['o','e']: # image name follows first letter
-      sources = { 'i': image, 'ift': imageFT, 'f': filter, 'fft': filterFT, 'p': product, 'pft': productFT }
-      isFT    = { 'i': False, 'ift': True,    'f': False,  'fft': True,     'p': False,   'pft': True      }
-      if cmd[0] == 'o':
-        filename = cmds.pop(0)
-        outputImage( sources[cmd[1:]], filename, outputMagnitudes, isFT[cmd[1:]] )
-      elif cmd[0] == 'e':
-        x = int(cmds.pop(0))
-        y = int(cmds.pop(0))
-        modulatePixels( sources[cmd[1:]], x, y, isFT[cmd[1:]] )
-    elif cmd == 'a':
-      editMode = 'a'
-    elif cmd == 's':
-      editMode = 's'
-    elif cmd == 'r':
-      radius = int(cmds.pop(0))
-    else:
-      print( """command '%s' not understood.
+    while len(cmds) > 0:
+        cmd = cmds.pop(0)
+        if cmd == 'f':
+            forwardFT_all()
+        elif cmd == 'i':
+            inverseFT_all()
+        elif cmd == 'm':
+            outputMagnitudes = True
+        elif cmd == 'p':
+            outputMagnitudes = False
+        elif cmd == 'x':
+            productFT = multiplyFTs(imageFT, filterFT)
+        elif cmd[0] in ['o', 'e']:  # image name follows first letter
+            sources = {'i': image, 'ift': imageFT, 'f': filter,
+                       'fft': filterFT, 'p': product, 'pft': productFT}
+            isFT = {'i': False, 'ift': True,    'f': False,
+                    'fft': True,     'p': False,   'pft': True}
+            if cmd[0] == 'o':
+                filename = cmds.pop(0)
+                outputImage(sources[cmd[1:]], filename,
+                            outputMagnitudes, isFT[cmd[1:]])
+            elif cmd[0] == 'e':
+                x = int(cmds.pop(0))
+                y = int(cmds.pop(0))
+                modulatePixels(sources[cmd[1:]], x, y, isFT[cmd[1:]])
+        elif cmd == 'a':
+            editMode = 'a'
+        elif cmd == 's':
+            editMode = 's'
+        elif cmd == 'r':
+            radius = int(cmds.pop(0))
+        else:
+            print("""command '%s' not understood.
 command-line arguments:
   f - apply forward FT
   i - apply inverse FT
@@ -905,34 +914,34 @@ command-line arguments:
   s - subtractive editing mode
   e - edit at a position like 'exxx 20 40' where exxx is one of ei, eift, of, offt, op opft (as with the 'o' command)
   m - for output, use magnitudes (default)
-  p - for output, use phases""" % cmd )
+  p - for output, use phases""" % cmd)
 
 else:
-      
-  # Run OpenGL
 
-  glutInit()
-  glutInitDisplayMode( GLUT_DOUBLE | GLUT_RGB )
-  glutInitWindowSize( windowWidth, windowHeight )
-  glutInitWindowPosition( 50, 50 )
+    # Run OpenGL
 
-  glutCreateWindow( 'imaging' )
+    glutInit()
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB)
+    glutInitWindowSize(windowWidth, windowHeight)
+    glutInitWindowPosition(50, 50)
 
-  glutDisplayFunc( display )
-  glutKeyboardFunc( keyboard )
-  glutSpecialFunc( special )
-  glutReshapeFunc( reshape )
-  glutMouseFunc( mouse )
-  glutMotionFunc( mouseMotion )
+    glutCreateWindow('imaging')
 
-  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE)
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER)
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER)
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-  glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, [1,0,0,1] );
+    glutDisplayFunc(display)
+    glutKeyboardFunc(keyboard)
+    glutSpecialFunc(special)
+    glutReshapeFunc(reshape)
+    glutMouseFunc(mouse)
+    glutMotionFunc(mouseMotion)
 
-  glEnable( GL_TEXTURE_2D )
-  glDisable( GL_DEPTH_TEST )
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE)
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER)
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER)
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, [1, 0, 0, 1])
 
-  glutMainLoop()
+    glEnable(GL_TEXTURE_2D)
+    glDisable(GL_DEPTH_TEST)
+
+    glutMainLoop()
