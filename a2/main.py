@@ -5,6 +5,7 @@
 #   numpy, PyOpenGL, Pillow
 
 
+import copy
 import sys
 import os
 import math
@@ -89,7 +90,6 @@ def ft1D(signal):
 #
 # Input is a 2D numpy array of complex values.
 # Output is the same.
-import copy
 
 
 def forwardFT(image):
@@ -104,10 +104,10 @@ def forwardFT(image):
     # modified = np.zeros_like(image, dtype="complex")
 
     # for x in range(image.shape[0]):
-        # modified[x, :] = ft1D(image[x, :])
+    # modified[x, :] = ft1D(image[x, :])
 
     # for y in range(image.shape[1]):
-        # modified[:, y] = ft1D(modified[:, y])
+    # modified[:, y] = ft1D(modified[:, y])
 
     # print(modified)
     # return modified
@@ -180,16 +180,18 @@ def multiplyFTs(image, filter):
     #   filter = filter * math.exp(math.pi * y * N**2)
     n = len(filter)
     m = len(filter[0])
-    filterX = np.array(list(map(lambda s: s[1] * np.exp(2 * math.pi * 1j * s[0] * (n/2) / n), enumerate(filter))))
+    filterX = np.array(
+        list(map(lambda s: s[1] * np.exp(math.pi * 1j * s[0]), enumerate(filter))))
     filterX = filterX.T
-    filterXY = np.array(list(map(lambda s: s[1] * np.exp(2 * math.pi * 1j * s[0] * (m/2) / m), enumerate(filterX))))
+    filterXY = np.array(
+        list(map(lambda s: s[1] * np.exp(math.pi * 1j * s[0]), enumerate(filterX))))
     shiftedFilter = filterXY.T
     newImageFT = image * shiftedFilter
     # newImage = inverseFT(newImageFT)
     return newImageFT
 
     # return modified
-    #return np.convolve(image, filter)  # (this is wrong)
+    # return np.convolve(image, filter)  # (this is wrong)
 
 
 # Set up the display and draw the current image
@@ -829,6 +831,7 @@ def mouseMotion(x, y):
 
 
 def modulatePixels(image, x, y, isFT):
+    # if editMode == 'a':
 
     # YOUR CODE HERE
 
