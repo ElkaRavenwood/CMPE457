@@ -826,12 +826,14 @@ def mouseMotion(x, y):
 # stored in image[ydim-1-y][xdim-1-x].
 
 def gaussian(image, meanX, meanY, SD):
+  modified = np.zeros_like(image);
   for x in range(image.shape[0]):
     for y in range(image.shape[1]):
-      val = 1/(2 * math.pi * SD * SD) * math.exp(- (x - meanX)**2 / (2*SD*SD) + (y-meanY)**2 / (2*SD*SD))
+      modified[x, y] = 1/(2 * math.pi * SD * SD) * math.exp(- (x - meanX)**2 / (2*SD*SD) + (y-meanY)**2 / (2*SD*SD))
     #   print(val)
     #   print("\t")
     # print("\n")
+  return modified
 
 def modulatePixels(image, x, y, isFT):
     global radius
