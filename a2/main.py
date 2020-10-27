@@ -172,7 +172,8 @@ def multiplyFTs( image, filter ):
   #   filter = filter * math.exp(math.pi * y * N**2)
 
   # return modified
-  return image # (this is wrong) 
+  return image # (this is wrong)
+  # return np.convolve(image, filter) 
 
 
 
@@ -874,7 +875,7 @@ if len(sys.argv) > 3:
       outputMagnitudes = True
     elif cmd == 'p':
       outputMagnitudes = False
-    elif cmd == b'x':
+    elif cmd == 'x':
       productFT = multiplyFTs( imageFT, filterFT )
     elif cmd[0] in ['o','e']: # image name follows first letter
       sources = { 'i': image, 'ift': imageFT, 'f': filter, 'fft': filterFT, 'p': product, 'pft': productFT }
