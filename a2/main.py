@@ -825,15 +825,14 @@ def mouseMotion(x, y):
 # image[y][x] should also be made at image[-y][-x], which is really
 # stored in image[ydim-1-y][xdim-1-x].
 
-def gaussian(image, meanX, meanY, SD):
-  modified = np.zeros_like(image);
-  for x in range(image.shape[0]):
-    for y in range(image.shape[1]):
-      modified[x, y] = 1/(2 * math.pi * SD * SD) * math.exp(- (x - meanX)**2 / (2*SD*SD) + (y-meanY)**2 / (2*SD*SD))
+def gaussian(x, y, meanX, meanY, SD):
+    # for x in range(image.shape[0]):
+    # for y in range(image.shape[1]):
+    return 1/(2 * math.pi * SD * SD) * math.exp(- (x - meanX) ** 2 / (2*SD*SD) + (y-meanY)**2 / (2*SD*SD))
     #   print(val)
     #   print("\t")
     # print("\n")
-  return modified
+
 
 def modulatePixels(image, x, y, isFT):
     global radius
@@ -846,8 +845,6 @@ def modulatePixels(image, x, y, isFT):
     x = int(x)
     y = int(y)
 
-    gaussian(image, x, y, stdDev)
-
     neighbourStartX = max(0, x - radius)
     neighbourStartY = max(0, y - radius)
     neighbourEndX = min(width, x + radius)
@@ -856,19 +853,20 @@ def modulatePixels(image, x, y, isFT):
     nxRange = range(neighbourStartX, neighbourEndX)
     nyRange = range(neighbourStartY, neighbourEndY)
 
-    
-    for x in nxRange:
-        for y in nyRange:
-            if editMode == 's':
+    for nX in nyRange:
+        for nY in nxRange:
+            if editMode == b's':
                 if isFT:
-                    image[x][y] = tmpImage[x][y]
+                    image[nX][nY] = tmpImage[nX][nY]
                 else:
-                    image[x][y] = tmpImage[x][y]
-            elif editMode == 'a':
+                    image[nX][nY] = tmpImage[nX][nY] * \
+                        (1 - gaussian(nY, nX, x, y, stdDev))
+            elif editMode == b'a':
                 if isFT:
-                    image[x][y] = tmpImage[x][y]
+                    image[nX][nY] = tmpImage[nX][nY]
                 else:
-                    image[x][y] = tmpImage[x][y]
+                    image[nX][nY] = tmpImage[nX][nY] * \
+                        (1 + 0.1 * gaussian(nY, nX, x, y, stdDev))
 
     return image
 
