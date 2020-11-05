@@ -129,10 +129,10 @@ def inverseFT(image):
         for y in range(M):
             image[x, y] = complex(image[x, y].real, - image[x, y].imag)
     for x in range(N):
-        modified[x, :] = ft1D((image[x, :]))
+        modified[x, :] = ft1D((image[x, :]))/N
 
     for y in range(M):
-        modified[:, y] = ft1D((modified[:, y]))
+        modified[:, y] = ft1D((modified[:, y]))/M
 
     return modified
     # return np.fft.ifft2( image )
