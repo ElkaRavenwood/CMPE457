@@ -813,32 +813,23 @@ def modulatePixels(image, x, y, isFT):
     x = int(x)
     y = int(y)
 
-    neighbourStartX = max(0, x - radius)
-    neighbourStartY = max(0, y - radius)
-    neighbourEndX = min(width, x + radius)
-    neighbourEndY = min(height, y + radius)
-
-    nxRange = range(neighbourStartX, neighbourEndX)
-    nyRange = range(neighbourStartY, neighbourEndY)
+    nxRange = range(x - radius, x + radius)
+    nyRange = range(y - radius, y + radius)
 
     for nX in nyRange:
         for nY in nxRange:
+
             if editMode == b's':
                 factor = (1 - gaussian(nY, nX, x, y, stdDev))
-                if isFT:
-                    image[nX][nY] = np.exp(np.log(tmpImage[nX][nY]) * factor)
-                    image[wrap(width - nX, width)][wrap(height - nY, height)] \
-                        = np.exp(np.log(tmpImage[nX][nY]) * factor)
-                else:
-                    image[nX][nY] = tmpImage[nX][nY] * factor
             elif editMode == b'a':
                 factor = 1 + 0.1 + gaussian(nY, nX, x, y, stdDev)
-                if isFT:
-                    image[nX][nY] = np.exp(np.log(tmpImage[nX][nY]) * factor)
-                    image[wrap(width - nX, width)][wrap(height - nY, height)] \
-                        = np.exp(np.log(tmpImage[nX][nY]) * factor)
-                else:
-                    image[nX][nY] = tmpImage[nX][nY] * factor
+
+            if isFT:
+                image[wrap(nX, width)][wrap(nY, height)] = np.exp(np.log(tmpImage[wrap(nX, width)][wrap(nY, height)]) * factor)
+                image[wrap(width - nX, width)][wrap(height - nY, height)] \
+                    = np.exp(np.log(tmpImage[wrap(nX, width)][wrap(nY, height)]) * factor)
+            else:
+                image[wrap(nX, width)][wrap(nY, height)] = tmpImage[wrap(nX, width)][wrap(nY, height)] * factor
 
     return image
 
