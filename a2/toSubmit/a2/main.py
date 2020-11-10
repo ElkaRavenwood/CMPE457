@@ -102,8 +102,7 @@ def forwardFT(image):
     ftUV = np.copy(image).T
 
     ftXV = np.array(list(map(ft1D, image)))
-    ftXV = ftXV.T
-    ftUV = np.array(list(map(ft1D, ftXV)))
+    ftUV = np.array(list(map(ft1D, ftXV.T)))
 
     return ftUV.T
 
@@ -797,9 +796,7 @@ def mouseMotion(x, y):
 # stored in image[ydim-1-y][xdim-1-x].
 
 def gaussian(x, y, meanX, meanY, SD):
-    return 1 / (2 * math.pi * SD ** 2) * math.exp(
-        -((x - meanX) ** 2 / (2 * SD ** 2) + (y - meanY) ** 2)
-        / (2 * SD ** 2))
+    return np.exp(-((x - meanX) ** 2 + (y - meanY) ** 2) / (2 * SD ** 2))
 
 
 def modulatePixels(image, x, y, isFT):
