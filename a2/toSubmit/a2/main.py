@@ -97,10 +97,6 @@ def forwardFT(image):
     #
     # You must replace this code with your own, keeping the same function name are parameters.
     # print("forwardFT")
-
-    ftXV = np.copy(image)
-    ftUV = np.copy(image).T
-
     ftXV = np.array(list(map(ft1D, image)))
     ftUV = np.array(list(map(ft1D, ftXV.T)))
 
