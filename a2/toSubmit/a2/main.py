@@ -96,7 +96,7 @@ def forwardFT(image):
     # YOUR CODE HERE
     #
     # You must replace this code with your own, keeping the same function name are parameters.
-    # print("forwardFT")
+    
     ftXV = np.array(list(map(ft1D, image)))
     ftUV = np.array(list(map(ft1D, ftXV.T)))
 
@@ -112,8 +112,7 @@ def inverseFT(image):
     # YOUR CODE HERE
     #
     # You must replace this code with your own, keeping the same function name are parameters.
-    print("inverseFT")
-
+    
     modified = np.zeros_like(image, dtype="complex")
 
     N = image.shape[0]
