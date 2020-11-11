@@ -562,7 +562,19 @@ def loadImage(path):
         print('Failed to load image %s' % path)
         sys.exit(1)
 
-    return np.array(list(img.getdata()), np.complex_).reshape((img.size[1], img.size[0]))
+    img = np.array( list( img.getdata() ), np.complex_ ).reshape( (img.size[1],img.size[0]) )
+
+    M,N = img.shape
+    if M % 2 == 1:
+        extraRow = np.ones((img.shape[1]))
+        img = np.vstack((img, extraRow))
+        M,N = img.shape
+    if N % 2 == 1:
+        extraColumn = np.ones((img.shape[0], 1))
+        img = np.hstack((img, extraColumn))
+
+    return img
+    # return np.array(list(img.getdata()), np.complex_).reshape((img.size[1], img.size[0]))
 
 
 # Load a filter
