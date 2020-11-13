@@ -823,9 +823,9 @@ def modulatePixels(image, x, y, isFT):
     for nX in nyRange:
         for nY in nxRange:
 
-            if editMode == b's':
+            if editMode == b's' or editMode == 's':
                 factor = (1 - gaussian(nY, nX, x, y, stdDev))
-            elif editMode == b'a':
+            elif editMode == b'a' or editMode == 'a':
                 factor = 1 + 0.1 + gaussian(nY, nX, x, y, stdDev)
 
             if isFT:
