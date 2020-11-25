@@ -1,0 +1,65 @@
+CISC/CMPE 457 Assignment 1
+
+0. runs without error
+
+   1/1 no errors 
+
+  TA comments:
+
+
+
+1. applyBrightnessAndContrast
+
+   1/1 Modify only component 0 of the pixel (i.e. the Y value)
+
+   0.5/1 Compute newY = oldY * contrast + brightness and clamp to [0,255].
+
+   TA comments:
+	did not clamp to [0,255].
+
+
+2. performHistoEqualization
+
+   0/1 Store the calculated values in a separate image so as not to
+      affect the current calculation
+
+   0.5/1 Use the correct neighbourhood
+
+   1/1 Correctly handle pixels outside the image with either
+      (a) clamping to image border and counting or (b) not counting at all
+
+   1/1 Calculate the new value as "256 / count * num_less - 1", where
+      "count" is the number of pixels in the neighbourhood and
+      "num_less" is the number of pixels less than OR EQUAL TO to
+      centre pixel (can use 235-16+1 instead of 256 if they wish, even
+      though it's wrong)
+
+   TA comments:
+	you did sotre y seperately, but still changed pixel in the loops as calculation is still going on.
+	the neighbourhood using range need to include +1, maxX = min(width - 1, x + radius +1)
+	
+
+
+3. scaleImage
+
+   1/1 Detect and handle source pixels from outside the image
+      (i.e. make them white or black)
+
+   0.5/1 Use backward projection and scale about the centre
+
+
+   TA comments:
+	did not center
+
+
+4. Deductions for lateness:
+
+   0/0
+
+   TA comments: 
+
+
+
+Total
+
+   6.5/9
