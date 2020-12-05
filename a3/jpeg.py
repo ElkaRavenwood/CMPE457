@@ -170,15 +170,26 @@ def forwardJPEG():
 
         for j in range( 0, Ncols, blockSize ): # Apply to block starting at i,j
             for k in range(3):                 # Apply to channel Y (k=0), Cb (k=1), or Cr (k=2)
-
+    
                 # Step 1. Compute DCT of this block of inputImage.  The block
                 # has coordinates [i,i+blockSize-1]x[j,j+blockSize-1],
                 # and channel, k.  Store the DCT in dct[u][v].
 
                 # YOUR CODE HERE [2 marks]
-
-                pass
-              
+                for u in range(8):
+                    for v in range(8):
+                        dctSum = 0
+                        x = 0
+                        for xInput in range(i, i+blockSize-1):
+                            y = 0
+                            for yInput in range(j, j+blockSize-1):
+                                S = math.cos(((2*xInput + 1) * u * math.pi) / 2 * blockSize) * \
+                                        math.cos(((2*yInput + 1) * v * math.pi) / 2 * blockSize)
+                                dctSum += S * inputImage[xInput, yInput][k]
+                                y += 1
+                            x += 1
+                        dct[u,v] = dctSum
+    print(dct)
 
                 # Step 2. Apply quantization.  This will modify the coefficients in dct[u][v].
                 # Be sure to use the Quantization Tables (above) and be sure to multiply
@@ -187,7 +198,7 @@ def forwardJPEG():
 
                 # YOUR CODE HERE [1 mark]
               
-                pass
+                # pass
               
 
                 # Step 3. Add DC component to DCencoding vector for this
@@ -198,7 +209,7 @@ def forwardJPEG():
 
                 # YOUR CODE HERE [1 mark]
 
-                pass
+                # pass
               
               
                 # Step 4. Add the 63 AC components to the ACencoding vector.
@@ -210,7 +221,7 @@ def forwardJPEG():
 
                 # YOUR CODE HERE [2 marks] 
 
-                pass
+                # pass
               
 
     # At this point, the 'DCencoding' and 'ACencoding' vectors are
