@@ -177,16 +177,9 @@ def forwardJPEG():
 
                 # YOUR CODE HERE [2 marks]
                 for u in range(blockSize):
-                    au = 1 / (2 * math.pi) if u == 0 else 1
                     for v in range(blockSize):
-                        dctSum = 0
-                        av = 1 / (2 * math.pi) if v == 0 else 1 # else 1, not 0
-                        for xInput in range(i, i+blockSize):
-                            for yInput in range(j, j+blockSize):
-                                S = au * av * math.cos(((2*xInput + 1) * ((i+1)/blockSize) * math.pi) / 2 * blockSize) * \
-                                      math.cos(((2*yInput + 1) * ((j+1)/blockSize) * math.pi) / 2 * blockSize)
-                                dctSum += S * inputImage[xInput, yInput][k]
-                dct[u,v] = dctSum
+                        dct[u][v] = (inputImage[i : i + blockSize, j : j + blockSize, k] * dctBases[u][v]).sum()
+                
 
                 # Step 2. Apply quantization.  This will modify the coefficients in dct[u][v].
                 # Be sure to use the Quantization Tables (above) and be sure to multiply
@@ -194,10 +187,11 @@ def forwardJPEG():
                 # allows you to adjust the compression.
 
                 # YOUR CODE HERE [1 mark]
-                dctQuantized = np.empty_like(dct)
-                for u in range(blockSize):
-                    for v in range(blockSize):
-                        dctQuantized[u][v] = round(dct[u][v] / (quantizationTable[k][u][v] *compressionFactor));
+                # dctQuantized = np.empty_like(dct)
+                # for u in range(blockSize):
+                #     for v in range(blockSize):
+                #         dct[u][v] = round(dct[u][v] / (quantizationTable[k][u][v] * compressionFactor));
+                dct = np.round(np.divide(dct, (quantizationTable[k] * compressionFactor)))
                 # pass
               
 
@@ -208,7 +202,7 @@ def forwardJPEG():
                 # of the loop to know where to put ITS DC component.
 
                 # YOUR CODE HERE [1 mark]
-                DCencoding[k][DCencodingIndex[k]] = dctQuantized[0][0]
+                DCencoding[k][DCencodingIndex[k]] = dct[0][0]
                 DCencodingIndex[k] += 1
                 # pass
               
@@ -221,11 +215,15 @@ def forwardJPEG():
                 # YOU MUST USE THE zigzag ARRAY OF INDICES!
 
                 # YOUR CODE HERE [2 marks] 
+                # print(ACencoding)
+                # 561 blocks
                 for aci in range(blockSize):
                     for acj in range(blockSize):
                         if aci == 0 and acj == 0:
                             continue
-                        ACencoding[k][zigzag[aci][acj]] = dctQuantized[aci][acj]
+                        ACencoding[k, ACencodingIndex[k] + zigzag[aci][acj] - 1] = dct[aci][acj]
+                ACencodingIndex[k] += 63
+                # print(ACencodingIndex[k]*63)
                 # pass
               
 
@@ -305,25 +303,28 @@ def inverseJPEG():
                 # forwardJPEG().  Don't forget to use and update ACencodingIndex.
 
                 # YOUR CODE HERE [1 mark]
+                for u in range(blockSize):
+                    for v in range(blockSize):
+                        if u == 0 and v == 0:
+                            continue
+                        dct[u,v] = ACencoding[k][ACencodingIndex[k]*63 + zigzag[u][v] - 1]
+                ACencodingIndex[k] += 1           # YOUR CODE HERE [1 mark]
 
-                pass
-
-              
                 # Extract DC component from DCencoding vector.  This
                 # is the opposite of Step 3 in forwardJPEG().  Don't
                 # forget to use and update DCencodingIndex.
 
-                # YOUR CODE HERE [1 mark]
-
-                pass
+                dct[0, 0] = DCencoding[k][DCencodingIndex[k]]
+                DCencodingIndex[k] += 1               # YOUR CODE HERE [1 mark]
 
 
                 # Reverse the quantization.  This is the opposite of
                 # Step 2 in forwardJPEG().
 
                 # YOUR CODE HERE [1 mark]
-              
-                pass
+                for u in range(blockSize):
+                    for v in range(blockSize):
+                        dct[u,v] = round(dct[u, v] * quantizationTable[k][u][v] * compressionFactor)
 
 
                 # Compute inverse DCT of this block, [i,i+7]x[j,j+7],
@@ -331,10 +332,15 @@ def inverseJPEG():
                 # in forwardJPEG().  You should fill the image[x,y]
                 # array with the three-component pixel values, using
                 # dct[,] and dctBases[,,,].
-
-                # YOUR CODE HERE [1 mark]
-
-                pass
+                for u in range(blockSize):
+                    for v in range(blockSize):
+                        blockX = 0
+                        for x in range(i, i+blockSize):
+                            blockY = 0
+                            for y in range(j, j+blockSize):
+                                image[x][y][k] = dct[u,v] / dctBases[u,v,blockX,blockY]
+                                blockY+=1
+                            blockX+=1
 
 
 
