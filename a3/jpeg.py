@@ -1,3 +1,6 @@
+# Cyrus Ng, 20031696
+# Jamie Won, 20113217
+#
 # JPEG encoder/decoder
 #
 # This code runs the JPEG encoder on an image, but stops after it
