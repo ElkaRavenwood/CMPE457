@@ -219,10 +219,9 @@ def forwardJPEG():
                 # 561 blocks
                 for aci in range(blockSize):
                     for acj in range(blockSize):
-                        if aci == 0 and acj == 0:
-                            continue
+                        if aci == 0 and acj == 0: continue
                         ACencoding[k, ACencodingIndex[k] + zigzag[aci][acj] - 1] = dct[aci][acj]
-                ACencodingIndex[k] += 63
+                ACencodingIndex[k] += blockSize * blockSize - 1
                 # print(ACencodingIndex[k]*63)
                 # pass
               
@@ -305,10 +304,9 @@ def inverseJPEG():
                 # YOUR CODE HERE [1 mark]
                 for u in range(blockSize):
                     for v in range(blockSize):
-                        if u == 0 and v == 0:
-                            continue
-                        dct[u,v] = ACencoding[k][ACencodingIndex[k]*63 + zigzag[u][v] - 1]
-                ACencodingIndex[k] += 1           # YOUR CODE HERE [1 mark]
+                        if u == 0 and v == 0: continue
+                        dct[u,v] = ACencoding[k][ACencodingIndex[k] + zigzag[u][v] - 1]
+                ACencodingIndex[k] += blockSize * blockSize - 1           # YOUR CODE HERE [1 mark]
 
                 # Extract DC component from DCencoding vector.  This
                 # is the opposite of Step 3 in forwardJPEG().  Don't
@@ -322,9 +320,10 @@ def inverseJPEG():
                 # Step 2 in forwardJPEG().
 
                 # YOUR CODE HERE [1 mark]
-                for u in range(blockSize):
-                    for v in range(blockSize):
-                        dct[u,v] = round(dct[u, v] * quantizationTable[k][u][v] * compressionFactor)
+                # for u in range(blockSize):
+                #     for v in range(blockSize):
+                #         dct[u,v] = round(dct[u, v] * quantizationTable[k][u][v] * compressionFactor)
+                dct = dct * (quantizationTable[k] * compressionFactor)
 
 
                 # Compute inverse DCT of this block, [i,i+7]x[j,j+7],
@@ -332,15 +331,31 @@ def inverseJPEG():
                 # in forwardJPEG().  You should fill the image[x,y]
                 # array with the three-component pixel values, using
                 # dct[,] and dctBases[,,,].
-                for u in range(blockSize):
-                    for v in range(blockSize):
-                        blockX = 0
-                        for x in range(i, i+blockSize):
-                            blockY = 0
-                            for y in range(j, j+blockSize):
-                                image[x][y][k] = dct[u,v] / dctBases[u,v,blockX,blockY]
-                                blockY+=1
-                            blockX+=1
+
+                # blockX = 0
+                # for x in range(i, i+blockSize):
+                #     blockY = 0
+                #     for y in range(j, j+blockSize):
+                #         idctSum = 0
+                #         for u in range(blockSize):
+                #             for v in range(blockSize):
+                #                 idctSum += dct[u,v] * dctBases[u,v,blockX,blockY]
+                #         image[x,y,k] = idctSum
+                #         blockY += 1
+                #     blockX += 1
+                for x in range(blockSize):
+                    for y in range(blockSize):
+                        print("(", i + x, ", ", j + y, ")")
+                        image[i+x,j+y,k] = (dct * dctBases[:,:,x, y]).sum()
+                # for u in range(blockSize):
+                #     for v in range(blockSize):
+                        # blockX = 0
+                        # for x in range(i, i+blockSize):
+                        #     blockY = 0
+                        #     for y in range(j, j+blockSize):
+                        #         image[x][y][k] = dct[u,v] / dctBases[u,v,blockX,blockY]
+                        #         blockY+=1
+                        #     blockX+=1
 
 
 
