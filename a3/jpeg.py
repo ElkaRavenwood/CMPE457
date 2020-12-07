@@ -200,7 +200,6 @@ def forwardJPEG():
                 # YOUR CODE HERE [1 mark]
                 DCencoding[k,DCencodingIndex[k]] = dct[0,0]
                 DCencodingIndex[k] += 1
-                # pass
               
                 # Step 4. Add the 63 AC components to the ACencoding vector.
                 # Use and update the ACencodingIndex[k] so that the
