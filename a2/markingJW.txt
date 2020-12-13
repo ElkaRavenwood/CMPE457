@@ -1,0 +1,89 @@
+CISC/CMPE 457 Assignment 2 - Marking
+
+Forward & Backward FT:
+
+  Testing:
+
+    1/1 python main.py circle30.jpg box11 f oift circle30-ft.png
+    1/1 python main.py spitfire.jpg box11 f i oi spitfire-forward-backward.png
+
+  Code (in forwardFT and backwardFT):
+
+    2/2 forwardFT: Create separate image; iterate over rows; iterate over
+       columns.  Code should be very simple.
+
+    1/1 backwardFT: Same as forwardFT, but call a 1D inverse function
+       on each row/column
+
+    1/1 backwardFT: The 1D inverse function computes the conjugate of
+       the normalized 1D FT of the conjugate of the signal.
+
+    Alternatively, the BackwardFT could have the 1D inverse function
+    inline and perform a 1/(N*M) normalization at the end.
+
+  TA Comments:
+	
+
+
+
+
+Convolution by multiplying:
+
+  Testing:
+
+    1/1 python main.py spitfire.jpg gaussian11 f x i op spitfire-blurred.png
+
+  Code (in multiplyFTs):
+
+    1/1 copy image; apply (-1)^(x+y); multiply arrays
+
+    0/1 efficient implementation of (-1)^(x+y).  Don't use exponentiation/power!
+
+  TA Comments:
+	you used np.exp, which is correct but inefficient
+
+
+
+
+Editing in spectral domain:
+
+  Testing:
+
+    1/1  python main.py moon.jpg box11 f s r 30 eift 290 120 oift moon-ft-edited.png
+    0/1  python main.py mandrill.png box11 f a r 40 eift 100 150 eift 100 150 eift 100 150 eift 100 150 oift mandrill-ft-edited.png
+
+        - tests for adding vs subtracting
+	- tests for the correct multiplication factor
+
+    1/1  python main.py moon.jpg box11 f s r 30 eift 65 10 eift 239 239 oift moon-wrapped-edits.png
+
+        - tests for correct wrapping and mirroring
+    
+    0/2  python main.py rect16x32.jpg gaussian3 f r 10 efft 10 10 offt gaussian-ft-edited.png; \
+        pngtopnm gaussian-ft-edited.png | pnmcut -left 90 -right -90 -top 90 -bottom -90 | pnmscale 4 | pnmtopng > gaussian-ft-edited-zoom.png
+
+        - tests for correctly multiplying the magnitude, and not raw complex numbers.
+	- tests for correct modulation using "np.exp(factor*np.log(1+image[yPos,xPos]))-1".
+
+  Code (in modulatePixels):
+
+    1/1  Only consider a box of 'radius' around the mouse position.  Only edit within the circular radius.
+
+    
+  TA Comments:
+	check attached picture for correct outputs
+
+
+
+Images
+
+    1/1  For providing all images.
+
+Penalties
+
+    -1/-1 For not following submission instructions exactly.  See "YOU WILL LOSE 1 MARK" in the instructions.
+	comments: _MACOSX file included
+    
+
+
+Total   11/16
